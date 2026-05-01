@@ -1,12 +1,33 @@
-package repository
+package repo
 
-import "localtunes/internal/models"
+import (
+	"database/sql"
+	"fmt"
+	"localtunes/internal/models"
+	"modernc.org/sqlite"
+)
 
-var sampleTracks = []models.Track{
-	{ID: "1", Title: "Local Sunrise", Artist: "The Loop", Duration: 210},
-	{ID: "2", Title: "Late Night Vinyl", Artist: "Mono Soul", Duration: 185},
+type TrackRepo struct {
+	db *sql.DB
 }
 
-func GetAllTracks() []models.Track {
-	return sampleTracks
+func NewTrackRepo(dbPath string) (*TrackRepo, error) {
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS tracks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		title TEXT,
+		artist TEXT,
+		album TEXT,
+		cover_url TEXT,
+		file_name TEXT UNIQUE
+	)`)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TrackRepo{db: db}, nil
 }
