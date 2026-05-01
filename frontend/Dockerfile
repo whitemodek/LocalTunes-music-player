@@ -1,20 +1,15 @@
-FROM golang:1.21-alpine AS builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
+COPY package*.json ./
+RUN npm ci
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o localtunes ./cmd/server
+RUN npm run build
 
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+FROM nginx:alpine
 
-WORKDIR /app
-COPY --from=builder /app/localtunes .
-COPY --from=builder /app/uploads ./uploads
-COPY --from=builder /app/static ./static
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-EXPOSE 8080
-CMD ["./localtunes"]
+EXPOSE 80
