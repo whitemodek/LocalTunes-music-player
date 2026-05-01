@@ -1,10 +1,11 @@
 package repo
 
 import (
+	"backend/internal/models"
 	"database/sql"
 	"fmt"
-	"localtunes/internal/models"
-	"modernc.org/sqlite"
+
+	_ "modernc.org/sqlite"
 )
 
 type TrackRepo struct {
@@ -23,7 +24,8 @@ func NewTrackRepo(dbPath string) (*TrackRepo, error) {
 		artist TEXT,
 		album TEXT,
 		cover_url TEXT,
-		file_name TEXT UNIQUE
+		file_name TEXT UNIQUE,
+		stream_url TEXT
 	)`)
 	if err != nil {
 		return nil, err
@@ -33,13 +35,13 @@ func NewTrackRepo(dbPath string) (*TrackRepo, error) {
 }
 
 func (r *TrackRepo) Save(t *models.Track) error {
-	_, err := r.db.Exec(`INSERT OR IGNORE INTO tracks (title, artist, album, cover_url, file_name)
-		VALUES (?, ?, ?, ?, ?)`, t.Title, t.Artist, t.Album, t.CoverURL, t.FileName)
+	_, err := r.db.Exec(`INSERT OR IGNORE INTO tracks (title, artist, album, cover_url, file_name, stream_url)
+		VALUES (?, ?, ?, ?, ?, ?)`, t.Title, t.Artist, t.Album, t.CoverURL, t.FileName, t.StreamURL)
 	return err
 }
 
 func (r *TrackRepo) Search(q string) ([]models.Track, error) {
-	rows, err := r.db.Query(`SELECT id, title, artist, album, cover_url, file_name 
+	rows, err := r.db.Query(`SELECT id, title, artist, album, cover_url, file_name, stream_url 
 		FROM tracks 
 		WHERE title LIKE ? OR artist LIKE ? 
 		ORDER BY id DESC`,
@@ -52,11 +54,10 @@ func (r *TrackRepo) Search(q string) ([]models.Track, error) {
 	var tracks []models.Track
 	for rows.Next() {
 		var t models.Track
-		var fileName string
-		if err := rows.Scan(&t.ID, &t.Title, &t.Artist, &t.Album, &t.CoverURL, &fileName); err != nil {
+		err = rows.Scan(&t.ID, &t.Title, &t.Artist, &t.Album, &t.CoverURL, &t.FileName, &t.StreamURL)
+		if err != nil {
 			return nil, err
 		}
-		t.StreamURL = "/api/stream/" + fileName
 		tracks = append(tracks, t)
 	}
 	return tracks, nil

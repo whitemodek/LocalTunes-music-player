@@ -5,15 +5,10 @@ import PauseIcon from '@mui/icons-material/Pause';
 import ReactPlayer from 'react-player';
 
 export default function Player({ track }) {
-  const [playing, setPlaying] = useState(true);
-  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const playerRef = useRef(null);
 
   const togglePlay = () => {
-    if (playing) {
-      audioRef.current?.pause();
-    } else {
-      audioRef.current?.play();
-    }
     setPlaying(!playing);
   };
 
@@ -23,7 +18,7 @@ export default function Player({ track }) {
       display: 'flex', alignItems: 'center', p: 2, borderTop: '1px solid #444', zIndex: 1000
     }}>
       <ReactPlayer 
-        ref={audioRef} 
+        ref={playerRef} 
         url={`http://localhost:8080${track.streamUrl}`} 
         playing={playing} 
         hidden 

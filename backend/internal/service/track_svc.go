@@ -1,18 +1,18 @@
 package service
 
 import (
+	"backend/internal/models"
+	repo "backend/internal/repository"
+	repository "backend/internal/repository"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
-	"localtunes/internal/models"
-	"localtunes/internal/repo"
-	"github.com/dhowden/tag"
 )
 
 type TrackSvc struct {
-	repo *repo.TrackRepo
+	repo *repository.TrackRepo
 }
 
 func NewTrackSvc(repo *repo.TrackRepo) *TrackSvc {
@@ -34,19 +34,20 @@ func (s *TrackSvc) Upload(src io.Reader, origName string) (*models.Track, error)
 	io.Copy(dst, src)
 
 	track := &models.Track{
-		FileName: fileName,
-		CoverURL: "/static/default.jpg", // Заглушка обложки
+		FileName:  fileName,
+		CoverURL:  "/static/default.jpg", // Заглушка обложки
+		StreamURL: "/api/stream/" + fileName,
 	}
 
 	f, err := os.Open(filePath)
 	if err == nil {
 		defer f.Close()
-		m, err := tag.ReadFrom(f)
-		if err == nil && m != nil {
-			track.Title = m.Title()
-			track.Artist = m.Artist()
-			track.Album = m.Album()
-		}
+		// m, err := tag.ReadFrom(f)
+		// if err == nil && m != nil {
+		// 	track.Title = m.Title()
+		// 	track.Artist = m.Artist()
+		// 	track.Album = m.Album()
+		// }
 	}
 
 	if track.Title == "" {

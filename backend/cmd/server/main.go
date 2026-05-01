@@ -1,11 +1,12 @@
 package main
 
 import (
+	"backend/internal/handler"
+	repo "backend/internal/repository"
+	"backend/internal/service"
 	"log"
 	"net/http"
-	"localtunes/internal/handler"
-	"localtunes/internal/repo"
-	"localtunes/internal/service"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
