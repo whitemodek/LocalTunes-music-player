@@ -8,6 +8,7 @@ backend/localtunes
 *.so
 
 # Frontend
+frontend/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/

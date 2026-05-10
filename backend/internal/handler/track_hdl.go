@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"backend/internal/handler/dto/mapper"
 	"backend/internal/service"
 	"net/http"
 
@@ -18,7 +19,9 @@ func NewTrackHdl(svc *service.TrackSvc) *TrackHdl {
 func (h *TrackHdl) Upload(c echo.Context) error {
 	file, err := c.FormFile("track")
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Файл не предоставлен"})
+		// return c.JSON(http.StatusBadRequest, map[string]string{"error": "Файл не предоставлен"})
+		response := mapper.BadRequestErrors("Файл не предоставлен")
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	src, err := file.Open()
