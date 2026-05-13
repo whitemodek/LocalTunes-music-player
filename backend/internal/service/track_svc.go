@@ -3,7 +3,6 @@ package service
 import (
 	"backend/internal/models"
 	repo "backend/internal/repository"
-	repository "backend/internal/repository"
 	"fmt"
 	"io"
 	"os"
@@ -11,15 +10,15 @@ import (
 	"time"
 )
 
-type TrackSvc struct {
-	repo *repository.TrackRepo
+type TrackService struct {
+	repo *repo.TrackRepo
 }
 
-func NewTrackSvc(repo *repo.TrackRepo) *TrackSvc {
-	return &TrackSvc{repo: repo}
+func NewTrackSvc(r *repo.TrackRepo) *TrackService {
+	return &TrackService{repo: r}
 }
 
-func (s *TrackSvc) Upload(src io.Reader, origName string) (*models.Track, error) {
+func (s *TrackService) Upload(src io.Reader, origName string) (*models.Track, error) {
 	os.MkdirAll("uploads", 0755)
 
 	ext := filepath.Ext(origName)
@@ -35,19 +34,12 @@ func (s *TrackSvc) Upload(src io.Reader, origName string) (*models.Track, error)
 
 	track := &models.Track{
 		FileName:  fileName,
-		CoverURL:  "/static/default.jpg", // Заглушка обложки
 		StreamURL: "/api/stream/" + fileName,
 	}
 
 	f, err := os.Open(filePath)
 	if err == nil {
 		defer f.Close()
-		// m, err := tag.ReadFrom(f)
-		// if err == nil && m != nil {
-		// 	track.Title = m.Title()
-		// 	track.Artist = m.Artist()
-		// 	track.Album = m.Album()
-		// }
 	}
 
 	if track.Title == "" {
@@ -64,6 +56,6 @@ func (s *TrackSvc) Upload(src io.Reader, origName string) (*models.Track, error)
 	return track, nil
 }
 
-func (s *TrackSvc) Search(q string) ([]models.Track, error) {
+func (s *TrackService) Search(q string) ([]models.Track, error) {
 	return s.repo.Search(q)
 }

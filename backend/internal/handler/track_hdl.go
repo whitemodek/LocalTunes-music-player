@@ -4,24 +4,38 @@ import (
 	"backend/internal/handler/dto/mapper"
 	"backend/internal/service"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
-type TrackHdl struct {
-	svc *service.TrackSvc
+type TrackHandler struct {
+	svc *service.TrackService
 }
 
-func NewTrackHdl(svc *service.TrackSvc) *TrackHdl {
-	return &TrackHdl{svc: svc}
+func NewTrackHdl(svc *service.TrackService) *TrackHandler {
+	return &TrackHandler{svc: svc}
 }
 
-func (h *TrackHdl) Upload(c echo.Context) error {
+func (h *TrackHandler) Upload(c echo.Context) error {
 	file, err := c.FormFile("track")
 	if err != nil {
-		// return c.JSON(http.StatusBadRequest, map[string]string{"error": "Файл не предоставлен"})
 		response := mapper.BadRequestErrors("Файл не предоставлен")
 		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	allowed := map[string]bool{
+		".mp3":  true,
+		".wav":  true,
+		".ogg":  true,
+		".flac": true,
+		".aac":  true,
+		".m4a":  true,
+	}
+	if !allowed[ext] {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Not .mp3, .wav, .ogg, .flac, .aac, .m4a"})
 	}
 
 	src, err := file.Open()
@@ -38,7 +52,7 @@ func (h *TrackHdl) Upload(c echo.Context) error {
 	return c.JSON(http.StatusOK, track)
 }
 
-func (h *TrackHdl) Search(c echo.Context) error {
+func (h *TrackHandler) Search(c echo.Context) error {
 	q := c.QueryParam("q")
 	tracks, err := h.svc.Search(q)
 	if err != nil {

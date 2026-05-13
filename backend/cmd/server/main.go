@@ -6,6 +6,8 @@ import (
 	"backend/internal/service"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -34,6 +36,20 @@ func main() {
 		api.POST("/upload", trackHdl.Upload)
 		api.GET("/search", trackHdl.Search)
 	}
+
+	e.GET("/stream-direct/:track_id", func(c echo.Context) error {
+		trackID := c.Param("track_id")
+		filePath := filepath.Join("uploads", trackID)
+
+		if _, err := os.Stat(filePath); err != nil {
+			if os.IsNotExist(err) {
+				return echo.NewHTTPError(http.StatusNotFound, "track not found")
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return c.File(filePath)
+	})
 
 	e.Static("/api/stream", "uploads")
 	e.Static("/static", "static")
