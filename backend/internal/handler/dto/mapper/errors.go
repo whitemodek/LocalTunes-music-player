@@ -7,3 +7,9 @@ func BadRequestErrors(error string) responses.BadRequestError {
 		Error: error,
 	}
 }
+
+func InternalServerError() responses.InternalServerError {
+	return responses.InternalServerError{
+		Error: "Internal server error",
+	}
+}

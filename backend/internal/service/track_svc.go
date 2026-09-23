@@ -11,42 +11,38 @@ import (
 )
 
 type TrackService struct {
-	repo *repo.TrackRepo
+	repo       *repo.TrackRepo
+	uploadsDir string
 }
 
-func NewTrackSvc(r *repo.TrackRepo) *TrackService {
-	return &TrackService{repo: r}
+func NewTrackSvc(r *repo.TrackRepo, uploadsDir string) *TrackService {
+	return &TrackService{repo: r, uploadsDir: uploadsDir}
 }
 
 func (s *TrackService) Upload(src io.Reader, origName string) (*models.Track, error) {
-	os.MkdirAll("uploads", 0755)
+	if err := os.MkdirAll(s.uploadsDir, 0755); err != nil {
+		return nil, err
+	}
 
 	ext := filepath.Ext(origName)
 	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
-	filePath := filepath.Join("uploads", fileName)
+	filePath := filepath.Join(s.uploadsDir, fileName)
 
 	dst, err := os.Create(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer dst.Close()
-	io.Copy(dst, src)
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return nil, err
+	}
 
 	track := &models.Track{
 		FileName:  fileName,
 		StreamURL: "/api/stream/" + fileName,
-	}
-
-	f, err := os.Open(filePath)
-	if err == nil {
-		defer f.Close()
-	}
-
-	if track.Title == "" {
-		track.Title = origName
-	}
-	if track.Artist == "" {
-		track.Artist = "Unknown Artist"
+		Title:     origName,
+		Artist:    "Unknown Artist",
 	}
 
 	if err := s.repo.Save(track); err != nil {

@@ -35,17 +35,24 @@ func NewTrackRepo(dbPath string) (*TrackRepo, error) {
 }
 
 func (r *TrackRepo) Save(t *models.Track) error {
-	_, err := r.db.Exec(`INSERT OR IGNORE INTO tracks (title, artist, album, cover_url, file_name, stream_url)
-		VALUES (?, ?, ?, ?, ?, ?)`, t.Title, t.Artist, t.Album, t.CoverURL, t.FileName, t.StreamURL)
-	return err
+	return r.db.QueryRow(`INSERT INTO tracks (title, artist, album, cover_url, file_name, stream_url)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(file_name) DO UPDATE SET
+			title = excluded.title,
+			artist = excluded.artist,
+			album = excluded.album,
+			cover_url = excluded.cover_url,
+			stream_url = excluded.stream_url
+		RETURNING id`,
+		t.Title, t.Artist, t.Album, t.CoverURL, t.FileName, t.StreamURL).Scan(&t.ID)
 }
 
 func (r *TrackRepo) Search(q string) ([]models.Track, error) {
 	rows, err := r.db.Query(`SELECT id, title, artist, album, cover_url, file_name, stream_url 
 		FROM tracks 
-		WHERE title LIKE ? OR artist LIKE ? 
+		WHERE title LIKE ? OR artist LIKE ? OR album LIKE ?
 		ORDER BY id DESC`,
-		fmt.Sprintf("%%%s%%", q), fmt.Sprintf("%%%s%%", q))
+		fmt.Sprintf("%%%s%%", q), fmt.Sprintf("%%%s%%", q), fmt.Sprintf("%%%s%%", q))
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +66,9 @@ func (r *TrackRepo) Search(q string) ([]models.Track, error) {
 			return nil, err
 		}
 		tracks = append(tracks, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return tracks, nil
 }
